@@ -6,22 +6,29 @@ defmodule Nostrum.Application do
   require Logger
 
   @doc false
-  def start(_type, _args) do
+  def start(_type, [embedded: true]) do
+    Supervisor.start_link([], strategy: :one_for_one)
+  end
+
+  def start(_type, args) do
     check_token()
     check_executables()
     setup_ets_tables()
 
-    children = [
-      Nostrum.Api.Ratelimiter,
-      Nostrum.Shard.Connector,
-      Nostrum.Cache.CacheSupervisor,
-      Nostrum.Shard.Supervisor,
-      Nostrum.Voice.Supervisor
-    ]
+    children =
+      if Keyword.get(args, :embedded, false) do
+        []
+      else
+        children()
+      end
 
     if Application.get_env(:nostrum, :dev),
       do: Supervisor.start_link(children ++ [DummySupervisor], strategy: :one_for_one),
       else: Supervisor.start_link(children, strategy: :one_for_one)
+  end
+
+  def start_link(_args) do
+    Supervisor.start_link(children(), strategy: :one_for_one)
   end
 
   @doc false
@@ -66,5 +73,15 @@ defmodule Nostrum.Application do
       true ->
         :ok
     end
+  end
+
+  defp children() do
+    [
+      Nostrum.Api.Ratelimiter,
+      Nostrum.Shard.Connector,
+      Nostrum.Cache.CacheSupervisor,
+      Nostrum.Shard.Supervisor,
+      Nostrum.Voice.Supervisor
+    ]
   end
 end

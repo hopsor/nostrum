@@ -3,7 +3,8 @@ import Config
 config :nostrum,
   token: "",
   ffmpeg: "ffmpeg",
-  youtubedl: "youtube-dl"
+  youtubedl: "youtube-dl",
+  embedded: false
 
 config :logger, :console, metadata: [:shard, :guild, :channel]
 
