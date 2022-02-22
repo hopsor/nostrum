@@ -10,16 +10,16 @@ defmodule Nostrum.Application do
     Supervisor.start_link([], strategy: :one_for_one)
   end
 
-  def start(_type, args) do
+  def start(_type, _args) do
     check_token()
     check_executables()
     setup_ets_tables()
 
     children =
-      if Keyword.get(args, :embedded, false) do
+      if Application.get_env(:nostrum, :embedded) do
         []
       else
-        children()
+        get_children()
       end
 
     if Application.get_env(:nostrum, :dev),
@@ -28,7 +28,7 @@ defmodule Nostrum.Application do
   end
 
   def start_link(_args) do
-    Supervisor.start_link(children(), strategy: :one_for_one)
+    Supervisor.start_link(get_children(), strategy: :one_for_one)
   end
 
   @doc false
@@ -75,7 +75,7 @@ defmodule Nostrum.Application do
     end
   end
 
-  defp children() do
+  defp get_children() do
     [
       Nostrum.Api.Ratelimiter,
       Nostrum.Shard.Connector,
